@@ -821,7 +821,7 @@ int romanToInt(string str)
 int main()
 {
 
-	cout << "poo poo ass" << endl;
+	cout << "am i dead yet?" << endl;
 	/*Solution sol;
 	vector<int>nums = { 1,4,3,6,5,8 };
 	cout << "original list : ";
