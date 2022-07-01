@@ -818,10 +818,54 @@ int romanToInt(string str)
 	return ret;
 }
 
+vector<vector<int>> threeSum(vector<int> arr)
+{
+	//the answer
+	vector<vector<int>> sol;
+	//sort our array
+	std::sort(arr.begin(), arr.end());
+	//start iterating
+	for (int i = 0; i < arr.size(); i++)
+	{
+		//create our pivots
+		int l = i + 1, r = arr.size() - 1;
+		//analyze based on our pivots skip repeating but also make sure we can check behind us
+		if (i == 0 || arr[i - 1] != arr[i])
+		{
+			//now its essentiall the sum problem
+			while (l < r)
+			{
+				int sum = arr[i] + arr[l] + arr[r];
+				//if we are lower than 0, our left pivot must be too small, hence iterate it
+				if (sum < 0)
+				{
+					l++;
+				}
+				//if we are above zero, decrement right pivot
+				else if (sum > 0)
+					r--;
+				//if if we have a match, push it back
+				else
+				{
+					vector<int> temp = { arr[i] , arr[l], arr[r] };
+					sol.push_back(temp);
+					l++;
+					r--;
+					while (l < r && arr[l] == arr[l - 1])
+						l++;
+				}
+			}
+		}
+	}
+
+	//return out
+	return sol;
+
+
+}
 int main()
 {
 
-	cout << "am i dead yet?" << endl;
 	/*Solution sol;
 	vector<int>nums = { 1,4,3,6,5,8 };
 	cout << "original list : ";
@@ -869,8 +913,23 @@ int main()
 	cout << maxAreaWater(arr1) << endl;
 	*/
 
+	//roman to int Driver
+	/*
 	cout << intToRoman(24) << endl;
 	cout << romanToInt("CMXLII") << endl;
+	*/
 
+
+	vector<int> test = { -1,0,1,2,-1,-4 };
+	vector<vector<int>> solution = threeSum(test);
+	for (int i = 0; i < solution.size(); i++)
+	{
+		cout << "entry: " << i << " : ";
+		for (int j = 0; j < solution[i].size(); j++)
+		{
+			cout << " " << solution[i][j] << ", ";
+		}
+		cout << endl;
+	}
 	return 0;
 }
