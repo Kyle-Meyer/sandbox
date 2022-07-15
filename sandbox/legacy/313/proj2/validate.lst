@@ -1,0 +1,93 @@
+     1                                  %define STDOUT 1
+     2                                  %define SYSCALL_EXIT 60	;95;0c
+     3                                  %define SYSCALL_WRITE 1
+     4                                  	section .data
+     5 00000000 0A496E76616C696420-     msgEr:	db	10, "Invalid entry, your word must START with a capitol letter AND END in '.', '?', or '!'", 10, 0
+     5 00000009 656E7472792C20796F-
+     5 00000012 757220776F7264206D-
+     5 0000001B 757374205354415254-
+     5 00000024 207769746820612063-
+     5 0000002D 617069746F6C206C65-
+     5 00000036 7474657220414E4420-
+     5 0000003F 454E4420696E20272E-
+     5 00000048 272C20273F272C206F-
+     5 00000051 72202721270A00     
+     6 00000058 546869732069732074-     msgDf:	db	"This is the original message.", 10, 0
+     6 00000061 6865206F726967696E-
+     6 0000006A 616C206D6573736167-
+     6 00000073 652E0A00           
+     7 00000077 0A00                    newLine: db	10, 0
+     8                                  	section .text
+     9                                  	global	validate
+    10                                  
+    11                                  	
+    12                                  validate:			;the opener
+    13                                  
+    14                                  
+    15 00000000 803F41                  	cmp     [rdi], byte 65	;check to see if we are at or "above" capitol A
+    16 00000003 7D25                            jge      capCheck	;if so move on
+    17 00000005 EB2D                    	jmp	messageFault	;if not, throw an error
+    18                                  
+    19                                  
+    20                                  	;; this is the message check loop, when we encounter the end of the input, signaled by the new line character we move on to process the final character
+    21                                  messageCheckLoop:
+    22 00000007 803F0A                  	cmp	[rdi], byte 10		
+    23 0000000A 7408                    	je	messageCheckLast
+    24 0000000C 48FFC7                  	inc	rdi
+    25 0000000F 48FFC2                  	inc	rdx
+    26 00000012 EBF3                    	jmp	messageCheckLoop
+    27                                  
+    28                                  	;; check the last, character, since we are at the new line character, we decrement by 1 so that we can get the second to last character, then we compare to see if its a '.', '?', or '!', if it is we go to the "corr
+    29                                  messageCheckLast:
+    30 00000014 48FFCF                  	dec	rdi
+    31 00000017 8A17                    	mov	dl, [rdi]
+    32 00000019 803F2E                  	cmp	[rdi], byte 46
+    33 0000001C 745D                    	je	checkEndG
+    34 0000001E 803F3F                  	cmp	[rdi], byte 63
+    35 00000021 7458                    	je	checkEndG
+    36 00000023 803F21                  	cmp	[rdi], byte 33
+    37 00000026 7453                    	je	checkEndG
+    38 00000028 EB0A                    	jmp	messageFault
+    39                                  
+    40                                  ;; the second part of the cap check, now we see if the character is "above" capital Z, if it is then we throw an error, if not, move onto the message check loop to iterate over the string until the end
+    41                                  capCheck:
+    42 0000002A 803F5A                  	cmp	[rdi], byte 90
+    43 0000002D 7F05                    	jg	messageFault
+    44 0000002F 4831D2                  	xor	rdx, rdx
+    45 00000032 EBD3                    	jmp	messageCheckLoop
+    46                                  
+    47                                  ;; the message fault is for throwing an error, we print the respective message, then we pass a 0 into rax for a binary check back in encrypt.asm
+    48                                  messageFault:
+    49 00000034 48BF-                   	mov	rdi, msgEr
+    49 00000036 [0000000000000000] 
+    50 0000003E E815000000              	call	print
+    51 00000043 48BF-                   	mov	rdi, newLine
+    51 00000045 [7700000000000000] 
+    52 0000004D E806000000              	call	print
+    53 00000052 B800000000              	mov	rax, 0
+    54 00000057 C3                      	ret
+    55                                  
+    56                                  ;;; the standard print function, prints characters until null character is detected
+    57                                  print:
+    58 00000058 4889F8                          mov     rax, rdi	;95;0c
+    59 0000005B 4831D2                          xor     rdx, rdx
+    60                                  
+    61                                  count:
+    62 0000005E 803F00                          cmp     [rdi], byte 0   ;null character?
+    63 00000061 7408                            je      end_count
+    64 00000063 48FFC2                          inc     rdx
+    65 00000066 48FFC7                          inc     rdi
+    66 00000069 EBF3                            jmp     count
+    67                                  
+    68                                  end_count:
+    69 0000006B 4889C6                          mov     rsi, rax
+    70 0000006E B801000000                      mov     rax, SYSCALL_WRITE
+    71 00000073 BF01000000                      mov     rdi, STDOUT
+    72 00000078 0F05                            syscall
+    73                                  
+    74 0000007A C3                              ret
+    75                                  
+    76                                  ;;; the correct ending, if we make it here, then we move a 1 into rax for the binary check and return back into our function
+    77                                  checkEndG:
+    78 0000007B B801000000              	mov	rax, 1
+    79 00000080 C3                      	ret
