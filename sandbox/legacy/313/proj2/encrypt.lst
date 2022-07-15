@@ -1,0 +1,452 @@
+     1                                  	
+     2                                  				;95;0c95;0c95;0crecursive subrou
+     3                                  %define STDOUT 1		;95;0c95;0c
+     4                                  %define SYSCALL_EXIT 60	
+     5                                  %define SYSCALL_WRITE 1
+     6                                  	
+     7                                  EXTERN mirrorAlg
+     8                                  EXTERN shift
+     9                                  EXTERN validate
+    10                                          section .data
+    11                                  
+    12                                  	
+    13                                  
+    14                                  
+    15                                  	
+    16 00000000 57656C636F6D652074-     msg1:   db      "Welcome to Encryptor: here options: ", 10, 0  ;C-style \0 terminated string
+    16 00000009 6F20456E6372797074-
+    16 00000012 6F723A206865726520-
+    16 0000001B 6F7074696F6E733A20-
+    16 00000024 0A00               
+    17                                  							       ;95;0c
+    18 00000026 0A72202D2020456E74-     msg2:   db      10, "r -  Enter New Message ",10, 0
+    18 0000002F 6572204E6577204D65-
+    18 00000038 7373616765200A00   
+    19 00000040 0A64202D2020446973-     msg3:	db	10, "d -  Display Current  Message ", 10, 0
+    19 00000049 706C61792043757272-
+    19 00000052 656E7420204D657373-
+    19 0000005B 616765200A00       
+    20 00000061 0A73202D2020536869-     msg4:	db	10, "s -  Shift Encrypt ", 10, 0
+    20 0000006A 667420456E63727970-
+    20 00000073 74200A00           
+    21 00000077 0A6D202D20204D6972-     msg5:	db 	10, "m -  Mirror Encrypt ", 10, 0
+    21 00000080 726F7220456E637279-
+    21 00000089 7074200A00         
+    22 0000008E 0A71202D2020517569-     msg6:	db	10, "q -  Quit ", 10, 0
+    22 00000097 74200A00           
+    23 0000009B 2A2A4F726967696E61-     msgCmp1: db	"**Original Message: ", 0
+    23 000000A4 6C204D657373616765-
+    23 000000AD 3A2000             
+    24 000000B0 2A2A456E6372797074-     msgCmp2: db	"**Encrypted Message: ", 0
+    24 000000B9 6564204D6573736167-
+    24 000000C2 653A2000           
+    25 000000C6 546869732069732074-     msgDf:	db	"This is the original message.", 10, 0
+    25 000000CF 6865206F726967696E-
+    25 000000D8 616C206D6573736167-
+    25 000000E1 652E0A00           
+    26 000000E5 0A706C656173652065-     numMsg:	db	10, "please enter the amount of bits to shift by", 10, 0
+    26 000000EE 6E7465722074686520-
+    26 000000F7 616D6F756E74206F66-
+    26 00000100 206269747320746F20-
+    26 00000109 73686966742062790A-
+    26 00000112 00                 
+    27 00000113 0A706C656173652065-     redMsg:	db	10, "please enter the message you would like to shift", 10, 0
+    27 0000011C 6E7465722074686520-
+    27 00000125 6D6573736167652079-
+    27 0000012E 6F7520776F756C6420-
+    27 00000137 6C696B6520746F2073-
+    27 00000140 686966740A00       
+    28 00000146 0A456E74657220796F-     inpMsg:	db	10, "Enter your choice now: ", 10, 0
+    28 0000014F 75722063686F696365-
+    28 00000158 206E6F773A200A00   
+    29 00000160 0A4865726520697320-     dpMsg: db	10, "Here is the unencrypted message:", 10, 0
+    29 00000169 74686520756E656E63-
+    29 00000172 727970746564206D65-
+    29 0000017B 73736167653A0A00   
+    30 00000183 0A496E76616C696420-     msgEr:	db	10, "Invalid entry, your word must end in '.', '?', or '!'", 10, 0
+    30 0000018C 656E7472792C20796F-
+    30 00000195 757220776F7264206D-
+    30 0000019E 75737420656E642069-
+    30 000001A7 6E20272E272C20273F-
+    30 000001B0 272C206F7220272127-
+    30 000001B9 0A00               
+    31 000001BB 0A696D70726F706572-     choiceEr: db	10, "improper choice your selection must be lower case 'r', 'd', 's', 'm', or 'q'", 10, 10, 0
+    31 000001C4 2063686F6963652079-
+    31 000001CD 6F75722073656C6563-
+    31 000001D6 74696F6E206D757374-
+    31 000001DF 206265206C6F776572-
+    31 000001E8 206361736520277227-
+    31 000001F1 2C202764272C202773-
+    31 000001FA 272C20276D272C206F-
+    31 00000203 72202771270A0A00   
+    32 0000020B 0A4865726520697320-     shiftMsg: db	10, "Here is your shifted message: " , 10, 0
+    32 00000214 796F75722073686966-
+    32 0000021D 746564206D65737361-
+    32 00000226 67653A200A00       
+    33 0000022C 0A7468617420697320-     shiftEr: db	10, "that is an invalid value (0-25) ", 10, 0
+    33 00000235 616E20696E76616C69-
+    33 0000023E 642076616C75652028-
+    33 00000247 302D323529200A00   
+    34 0000024F 0A6865726520697320-     mirrorMsg2: db	10, "here is your mirrored message: ", 10, 0
+    34 00000258 796F7572206D697272-
+    34 00000261 6F726564206D657373-
+    34 0000026A 6167653A200A00     
+    35 00000271 0A706C61636520686F-     debug:	db	10, "place holder for stuff", 10, 0
+    35 0000027A 6C64657220666F7220-
+    35 00000283 73747566660A00     
+    36 0000028A 0A00                    newLine: db	10, 0
+    37 0000028C 0A686572650A00          debug2:  db      10, "here", 10, 0
+    38 00000293 64                      start:	db	100		;95;0c
+    39 00000294 0A00                    char:   db      10, 0
+    40                                  
+    41                                  
+    42                                  	section .bss		;95;0c
+    43 00000000 <res 0000000E>          useL:	resb	14
+    44 0000000E <res 000000FF>          inp:	resb	255
+    45 0000010D <res 000000FF>          inpUnencrypt:	resb 255
+    46 0000020C <res 00000006>          useS:	resb	6
+    47 00000212 <res 00000006>          useLen:	resb	6
+    48 00000218 <res 000000FF>          mirrorMsg: resb 255
+    49                                  
+    50                                  	
+    51                                          section .text
+    52                                          global main
+    53                                  ;;; the start, load in our default message, and move into the menu
+    54                                  main:				;95;0c
+    55 00000000 E81F010000              	call    defaultMessage
+    56 00000005 E811000000                      call	menu
+    57 0000000A E8AE000000              	call	print
+    58 0000000F 0F05                    	syscall			;95;0c
+    59                                  ;;; standard exit call
+    60                                  exit:
+    61 00000011 B83C000000                      mov     rax, SYSCALL_EXIT
+    62 00000016 4831FF                          xor     rdi, rdi
+    63 00000019 0F05                    	syscall
+    64                                  
+    65                                  ;;; the menu of the program, everytime we return to the menu we copy our unencryped input back into our regular input so we can start from square one each time we apply a shift of some kind, then print the standard 
+    66                                  menu:
+    67 0000001B E850010000              	call	reCopy
+    68 00000020 48BF-                   	mov     rdi, msg1
+    68 00000022 [0000000000000000] 
+    69 0000002A E88E000000                      call    print
+    70                                  
+    71 0000002F 48BF-                           mov     rdi, msg2
+    71 00000031 [2600000000000000] 
+    72 00000039 E87F000000                      call    print
+    73                                  
+    74 0000003E 48BF-                           mov     rdi, msg3
+    74 00000040 [4000000000000000] 
+    75 00000048 E870000000                      call    print
+    76                                  	
+    77 0000004D 48BF-                           mov     rdi, msg4
+    77 0000004F [6100000000000000] 
+    78 00000057 E861000000                      call    print
+    79                                  
+    80 0000005C 48BF-                           mov     rdi, msg5
+    80 0000005E [7700000000000000] 
+    81 00000066 E852000000                      call    print
+    82                                  
+    83 0000006B 48BF-                           mov     rdi, msg6
+    83 0000006D [8E00000000000000] 
+    84 00000075 E843000000                      call    print
+    85                                  
+    86 0000007A 48BF-                   	mov	rdi, inpMsg
+    86 0000007C [4601000000000000] 
+    87 00000084 E834000000              	call	print
+    88 00000089 E822010000                      call    _getNum
+    89                                  
+    90 0000008E 3C72                            cmp     al, 114
+    91 00000090 0F844D010000                    je      readMsg
+    92                                  
+    93 00000096 3C64                            cmp     al, 100
+    94 00000098 0F8411020000                    je      dispMsg
+    95                                  
+    96 0000009E 3C73                            cmp     al, 115
+    97 000000A0 0F842C020000                    je      shiftBase
+    98                                  
+    99 000000A6 3C6D                            cmp     al, 109
+   100 000000A8 0F849A020000                    je      mirrorBase
+   101                                  	
+   102 000000AE 3C71                    	cmp     al, 113
+   103 000000B0 0F845BFFFFFF                    je      exit
+   104                                  
+   105 000000B6 E937030000              	jmp	choiceError
+   106 000000BB C3                      	ret
+   107                                  
+   108                                  
+   109                                  
+   110                                  breaker:
+   111 000000BC C3                      	ret
+   112                                  ;;; standard print call
+   113                                  print:
+   114 000000BD 4889F8                          mov     rax, rdi	;95;0c
+   115 000000C0 4831D2                          xor     rdx, rdx
+   116                                  
+   117                                  count:
+   118 000000C3 803F00                          cmp     [rdi], byte 0   ;null character?
+   119 000000C6 7408                            je      end_count
+   120 000000C8 48FFC2                          inc     rdx
+   121 000000CB 48FFC7                          inc     rdi
+   122 000000CE EBF3                            jmp     count
+   123                                  
+   124                                  end_count:
+   125 000000D0 4889C6                          mov     rsi, rax
+   126 000000D3 B801000000                      mov     rax, SYSCALL_WRITE
+   127 000000D8 BF01000000                      mov     rdi, STDOUT
+   128 000000DD 0F05                            syscall
+   129                                  
+   130 000000DF C3                              ret
+   131                                  ;;; standard print call, but now we check for message length, only used for user based input
+   132                                  print1:
+   133 000000E0 4889F8                          mov     rax, rdi        ;95;0c                                        
+   134 000000E3 488B0C25[12020000]      	mov	rcx, [useLen]
+   135 000000EB 4831D2                  	xor     rdx, rdx
+   136                                  
+   137                                  count1:
+   138 000000EE 803F0A                          cmp     [rdi], byte 10   ;null character?                              
+   139 000000F1 7412                            je      end_count1
+   140 000000F3 803F00                  	cmp	[rdi], byte 0,
+   141 000000F6 740D                    	je	end_count1
+   142 000000F8 4839CA                  	cmp	rdx, rcx
+   143 000000FB 7408                    	je	end_count1
+   144 000000FD 48FFC2                          inc     rdx
+   145 00000100 48FFC7                          inc     rdi
+   146 00000103 EBE9                            jmp     count1
+   147                                  
+   148                                  end_count1:
+   149 00000105 4889C6                          mov     rsi, rax
+   150 00000108 B801000000                      mov     rax, SYSCALL_WRITE
+   151 0000010D BF01000000                      mov     rdi, STDOUT
+   152 00000112 0F05                            syscall
+   153 00000114 48BF-                   	mov	rdi, newLine
+   153 00000116 [8A02000000000000] 
+   154 0000011E E89AFFFFFF              	call	print
+   155 00000123 C3                              ret
+   156                                  ;;; a loop to copy character by character the "This is the original message string" into input and unencrypted input, by the end it also makes the uselen 31
+   157                                  defaultMessage:
+   158 00000124 48B9-                   	mov	rcx, msgDf
+   158 00000126 [C600000000000000] 
+   159 0000012E 48BB-                   	mov	rbx, inp
+   159 00000130 [0E00000000000000] 
+   160 00000138 48BF-                   	mov	rdi, inpUnencrypt
+   160 0000013A [0D01000000000000] 
+   161 00000142 4831D2                  	xor	rdx, rdx
+   162                                  defaultLoop:
+   163 00000145 4881FAFF000000          	cmp	rdx, 255
+   164 0000014C 7414                    	je	defaultEnd
+   165 0000014E 8A01                    	mov	al, [rcx]
+   166 00000150 8803                    	mov	[rbx], al
+   167 00000152 8807                    	mov	[rdi], al
+   168 00000154 48FFC3                  	inc	rbx
+   169 00000157 48FFC7                  	inc	rdi
+   170 0000015A 48FFC1                  	inc	rcx
+   171 0000015D 48FFC2                  	inc	rdx
+   172 00000160 EBE3                    	jmp	defaultLoop
+   173                                  defaultEnd:
+   174 00000162 BA1F000000              	mov	rdx, 31
+   175 00000167 48891425[12020000]      	mov	[useLen], rdx
+   176 0000016F C3                      	ret
+   177                                  
+   178                                  ;;; the recopy function simply copies each chaaracter from the unencrypted input back into the regular input so that we can start over each time we apply a shift
+   179                                  reCopy:
+   180 00000170 4831C9                  	xor	rcx, rcx
+   181 00000173 4831FF                  	xor	rdi, rdi
+   182 00000176 4831D2                  	xor	rdx, rdx
+   183 00000179 48BB-                   	mov	rbx, useLen
+   183 0000017B [1202000000000000] 
+   184 00000183 48B9-                   	mov	rcx, inpUnencrypt
+   184 00000185 [0D01000000000000] 
+   185 0000018D 48BF-                   	mov	rdi, inp
+   185 0000018F [0E00000000000000] 
+   186                                  reCopyLoop:
+   187 00000197 4881FAFF000000          	cmp	rdx, 255
+   188 0000019E 740F                    	je	reCopyEnd
+   189 000001A0 8A01                    	mov	al, [rcx]
+   190 000001A2 8807                    	mov	[rdi], al
+   191 000001A4 48FFC1                  	inc	rcx
+   192 000001A7 48FFC7                  	inc	rdi
+   193 000001AA 48FFC2                  	inc	rdx
+   194 000001AD EBE8                    	jmp	reCopyLoop
+   195                                  reCopyEnd:
+   196                                  	
+   197 000001AF C3                      	ret
+   198                                  
+   199                                  ;;; get the user choice for the main menu, since it can only be 1 digit long we dont have to worry about any MSB to LSB conversions, just apply the 48 offset and continue on
+   200                                  _getNum:
+   201 000001B0 B800000000              	mov	rax, 0
+   202 000001B5 BF00000000              	mov	rdi, 0
+   203 000001BA 48BE-                   	mov	rsi, useL
+   203 000001BC [0000000000000000] 
+   204 000001C4 BA02000000              	mov	rdx, 2
+   205 000001C9 0F05                    	syscall
+   206 000001CB 8A0425[00000000]        	mov    	al, [useL]
+   207 000001D2 E8E5FEFFFF              	call	breaker
+   208 000001D7 480FBED8                	movsx	rbx, al
+   209 000001DB 880425[00000000]        	mov 	[useL], al
+   210 000001E2 C3                      	ret
+   211                                  
+   212                                  
+   213                                  ;;;here we first grab the user input from our buffer using standard system calls, then we copy it to memory, call the copy function so we can store it in the unencrypted input, get the message size, then call on val
+   214                                  readMsg:
+   215 000001E3 48BF-                   	mov	rdi, redMsg
+   215 000001E5 [1301000000000000] 
+   216 000001ED E8CBFEFFFF              	call	print
+   217 000001F2 B800000000              	mov     rax, 0          ;sys_read. Read what user inputs               
+   218 000001F7 BF00000000              	mov     rdi, 0          ;From stdin                                    
+   219 000001FC 48BE-                   	mov     rsi, inp        ;Save user input to buffer
+   219 000001FE [0E00000000000000] 
+   220 00000206 48893425[0E000000]              mov	[inp], rsi	;save it back to memory
+   221 0000020E BAFF000000                      mov     rdx, 255
+   222 00000213 0F05                    	syscall
+   223 00000215 488B3C25[0E000000]      	mov	rdi, [inp]
+   224 0000021D E80A000000              	call	copy		;copy it to unencrypted input
+   225 00000222 E865000000              	call	messageLen	;get the length
+   226 00000227 E992010000              	jmp	validateBase	;check to see if its valid
+   227                                  
+   228                                  ;;; similar to recopy but now we work in reverse, copying from inp to inpEnencrypt, but we first empty out the unencypted string just in case there was something there before
+   229                                  copy:
+   230                                  
+   231 0000022C 4831D2                  	xor	rdx, rdx
+   232 0000022F E836000000              	call	empty
+   233 00000234 4831D2                  	xor	rdx, rdx
+   234 00000237 48B9-                   	mov	rcx, inpUnencrypt
+   234 00000239 [0D01000000000000] 
+   235 00000241 48BF-                   	mov	rdi, inp
+   235 00000243 [0E00000000000000] 
+   236                                  
+   237                                  copyLoop:
+   238                                  
+   239 0000024B 803F0A                  	cmp	[rdi], byte 10
+   240 0000024E 740F                    	je	copyEnd
+   241 00000250 8A07                    	mov	al, [rdi]
+   242 00000252 8801                    	mov	[rcx], al
+   243 00000254 48FFC2                  	inc	rdx
+   244 00000257 48FFC7                  	inc	rdi
+   245 0000025A 48FFC1                  	inc	rcx
+   246 0000025D EBEC                    	jmp	copyLoop
+   247                                  copyEnd:
+   248 0000025F 48FFC2                  	inc	rdx
+   249 00000262 48FFC7                  	inc	rdi
+   250 00000265 8A07                    	mov	al, [rdi]
+   251 00000267 8801                    	mov	[rcx], al
+   252 00000269 C3                      	ret
+   253                                  empty:
+   254 0000026A 48B9-                   	mov	rcx, inpUnencrypt
+   254 0000026C [0D01000000000000] 
+   255 00000274 4831D2                  	xor	rdx, rdx
+   256                                  
+   257                                  ;;; a loop to empty out inp unencrpyt
+   258                                  emptyLoop:
+   259 00000277 4881FAFF000000          	cmp	rdx, 255
+   260 0000027E 740B                    	je	emptyEnd
+   261 00000280 B00A                    	mov	al, 10
+   262 00000282 8801                    	mov	[rcx], al
+   263 00000284 48FFC1                  	inc	rcx
+   264 00000287 48FFC2                  	inc	rdx
+   265 0000028A C3                      	ret
+   266                                  emptyEnd:
+   267                                  
+   268 0000028B C3                      	ret
+   269                                  
+   270                                  ;;; iterate over the string until we encounter the new line, signifying the end of our string, then we store the incremented rdx as our length
+   271                                  messageLen:
+   272                                  
+   273 0000028C 48B9-                   	mov	rcx, inp
+   273 0000028E [0E00000000000000] 
+   274 00000296 4831D2                  	xor	rdx, rdx
+   275                                  lengthLoop:
+   276 00000299 80390A                  	cmp	[rcx], byte 10
+   277 0000029C 7408                    	je	lengthEnd
+   278 0000029E 48FFC2                  	inc	rdx
+   279 000002A1 48FFC1                  	inc	rcx
+   280 000002A4 EBF3                    	jmp	lengthLoop
+   281                                  lengthEnd:
+   282                                  	
+   283 000002A6 48891425[12020000]      	mov	[useLen], rdx
+   284 000002AE C3                      	ret
+   285                                  
+   286                                  ;;; just a function to display the unencrypted message
+   287                                  dispMsg:
+   288 000002AF 48BF-                   	mov	rdi, dpMsg
+   288 000002B1 [6001000000000000] 
+   289 000002B9 E8FFFDFFFF              	call	print
+   290 000002BE 48BF-                   	mov     rdi, inpUnencrypt
+   290 000002C0 [0D01000000000000] 
+   291 000002C8 E813FEFFFF              	call    print1
+   292 000002CD E949FDFFFF              	jmp 	menu
+   293                                  
+   294                                  ;;; move the appropriate contents to the proper registers then call on the shift subroutine
+   295                                  shiftBase:
+   296 000002D2 4C8B2425[12020000]      	mov	r12, [useLen]
+   297 000002DA 48BF-                   	mov	rdi, inp
+   297 000002DC [0E00000000000000] 
+   298 000002E4 E8(00000000)            	call 	shift
+   299 000002E9 48BF-                   	mov     rdi, msgCmp1
+   299 000002EB [9B00000000000000] 
+   300 000002F3 E8C5FDFFFF                      call    print
+   301 000002F8 48BF-                           mov     rdi, inpUnencrypt
+   301 000002FA [0D01000000000000] 
+   302 00000302 E8D9FDFFFF                      call    print1
+   303 00000307 48BF-                           mov     rdi, newLine
+   303 00000309 [8A02000000000000] 
+   304 00000311 E8A7FDFFFF                      call    print
+   305 00000316 48BF-                   	mov	rdi, msgCmp2
+   305 00000318 [B000000000000000] 
+   306 00000320 E898FDFFFF              	call	print
+   307 00000325 48BF-                   	mov	rdi, inp
+   307 00000327 [0E00000000000000] 
+   308 0000032F E8ACFDFFFF              	call	print1
+   309 00000334 48BF-                   	mov	rdi, newLine
+   309 00000336 [8A02000000000000] 
+   310 0000033E E87AFDFFFF              	call	print
+   311 00000343 E9D3FCFFFF              	jmp 	menu
+   312                                  
+   313                                  ;;; move the appropriate contents to the proper registers then call on the mirror subroutine, then print the results
+   314                                  mirrorBase:
+   315 00000348 488B0C25[12020000]      	mov	rcx, [useLen]
+   316 00000350 48BF-                   	mov     rdi, inp
+   316 00000352 [0E00000000000000] 
+   317 0000035A E8(00000000)            	call	mirrorAlg
+   318 0000035F 48BF-                   	mov     rdi, msgCmp1
+   318 00000361 [9B00000000000000] 
+   319 00000369 E84FFDFFFF                      call    print
+   320 0000036E 48BF-                           mov     rdi, inpUnencrypt
+   320 00000370 [0D01000000000000] 
+   321 00000378 E863FDFFFF                      call    print1
+   322 0000037D 48BF-                           mov     rdi, newLine
+   322 0000037F [8A02000000000000] 
+   323 00000387 E831FDFFFF                      call    print
+   324 0000038C 48BF-                   	mov	rdi, msgCmp2
+   324 0000038E [B000000000000000] 
+   325 00000396 E822FDFFFF              	call	print
+   326 0000039B 48BF-                   	mov	rdi, inp
+   326 0000039D [0E00000000000000] 
+   327 000003A5 E836FDFFFF              	call	print1
+   328 000003AA 48BF-                   	mov	rdi, newLine
+   328 000003AC [8A02000000000000] 
+   329 000003B4 E804FDFFFF              	call	print
+   330 000003B9 E95DFCFFFF              	jmp	menu
+   331                                  	
+   332                                  
+   333                                  ;;; move the appropriate contents to the proper registers then call on the validate subroutine, and check the binary rax to see if the message was rejected, if it was, copy the defualt message, if not, just go back 
+   334                                  validateBase:
+   335 000003BE 48BF-                   	mov     rdi, inp
+   335 000003C0 [0E00000000000000] 
+   336 000003C8 4889F8                          mov     rax, rdi
+   337 000003CB 48BB-                           mov     rbx, inpUnencrypt
+   337 000003CD [0D01000000000000] 
+   338 000003D5 4831D2                          xor     rdx, rdx
+   339 000003D8 E8(00000000)                    call    validate
+   340 000003DD 4883F800                	cmp     rax, 0
+   341 000003E1 7405                            je      defaultMessageArrange
+   342 000003E3 E933FCFFFF              	jmp     menu
+   343                                  defaultMessageArrange:
+   344 000003E8 E837FDFFFF              	call	defaultMessage
+   345 000003ED E929FCFFFF              	jmp	menu
+   346                                  
+   347                                  ;;; if the user entered an incorrect choice in the menu
+   348                                  choiceError:
+   349 000003F2 48BF-                   	mov	rdi, choiceEr
+   349 000003F4 [BB01000000000000] 
+   350 000003FC E8BCFCFFFF              	call	print
+   351 00000401 E915FCFFFF              	jmp	menu

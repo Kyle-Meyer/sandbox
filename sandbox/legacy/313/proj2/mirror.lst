@@ -1,0 +1,100 @@
+     1                                  %define STDOUT 1
+     2                                  %define SYSCALL_EXIT 60	;95;0c
+     3                                  %define SYSCALL_WRITE 1
+     4                                  	section .data
+     5 00000000 0A00                    newLine: db	10, 0
+     6                                  	
+     7                                  	section .text
+     8                                  	global mirrorAlg
+     9                                  
+    10                                  
+    11                                  ;;; the start
+    12                                  mirrorAlg:
+    13 00000000 4889FB                  	mov     rbx, rdi
+    14 00000003 4831D2                  	xor 	rdx, rdx
+    15                                  ;;; similar to shift, we move through each character until we encounter the length of string, which is stored in rcx, the null character, or the new line character
+    16                                  mirrorLoop:
+    17 00000006 803F0A                  	cmp	[rdi], byte 10
+    18 00000009 746A                    	je	mirrorEnd
+    19 0000000B 803F00                  	cmp	[rdi], byte 0
+    20 0000000E 7465                    	je	mirrorEnd
+    21 00000010 4839CA                  	cmp	rdx, rcx
+    22 00000013 7460                    	je	mirrorEnd
+    23 00000015 E80D000000              	call	mirrorDistinguish
+    24 0000001A E889000000              	call	breaker
+    25 0000001F 48FFC2                  	inc	rdx
+    26 00000022 48FFC7                  	inc	rdi
+    27 00000025 EBDF                    	jmp	mirrorLoop
+    28                                  ;;; determine if our character is lower case or upper case, we also copy in our value of the character to r10, and then copy it to r11 for mathematical purposes later
+    29                                  mirrorDistinguish:	
+    30 00000027 4C0FBE17                	movsx	r10, byte [rdi]
+    31 0000002B 4D89D3                  	mov	r11, r10
+    32 0000002E 803F41                          cmp     [rdi], byte 65   
+    33 00000031 7D01                            jge     upperCaseMir
+    34 00000033 C3                       	ret
+    35                                  ;;; second part of checking our upper case, if its within the range of the alphabet then we will set our axiom to the middle M being 77, subtract out our original character value to get the distance to the axiom, th
+    36                                  upperCaseMir:
+    37 00000034 803F5A                  	cmp	[rdi], byte 90
+    38 00000037 7F14                    	jg	mirrorLowerCheck
+    39 00000039 41B84D000000            	mov	r8, 77
+    40 0000003F 41B94D000000            	mov	r9, 77
+    41 00000045 4D29D0                  	sub	r8, r10
+    42 00000048 4D01C0                  	add	r8, r8
+    43 0000004B EB20                    	jmp	mirrorOffset
+    44                                  
+    45                                  ;;; checking to see if we are within ange of the lower case alphabet
+    46                                  mirrorLowerCheck:
+    47 0000004D 803F61                  	cmp	[rdi], byte 97
+    48 00000050 7D01                    	jge	mirrorLowerCheckAgane
+    49 00000052 C3                      	ret
+    50                                  ;;; if we are then we set our axiom to lower case m (109) and do our calculation from there
+    51                                  mirrorLowerCheckAgane:
+    52 00000053 803F7A                  	cmp	[rdi], byte 122
+    53 00000056 7F14                    	jg	mirrorTooHigh
+    54 00000058 41B86D000000            	mov	r8, 109
+    55 0000005E 41B96D000000            	mov	r9, 109
+    56 00000064 4D29D0                  	sub	r8, r10
+    57 00000067 4D01C0                  	add	r8, r8
+    58 0000006A EB01                    	jmp	mirrorOffset
+    59                                  
+    60                                  ;;; if we are out of range of our acceptable characters then we return back to the loop as we do not need to do anything for our function
+    61                                  mirrorTooHigh:
+    62 0000006C C3                      	ret
+    63                                  ;;; apply the final offset to our character position
+    64                                  mirrorOffset:
+    65                                  	
+    66 0000006D 4983C001                	add	r8, 1
+    67                                  
+    68 00000071 4C0107                  	add	[rdi], r8
+    69 00000074 C3                      	ret
+    70                                  
+    71                                  ;;; the end of our mirror call
+    72                                  mirrorEnd:
+    73                                  
+    74 00000075 48BF-                   	mov	rdi, newLine
+    74 00000077 [0000000000000000] 
+    75 0000007F E801000000              	call	print
+    76 00000084 C3                              ret
+    77                                  
+    78                                  ;;; standard print function
+    79                                  print:
+    80 00000085 4889F8                          mov     rax, rdi	;95;0c
+    81 00000088 4831D2                          xor     rdx, rdx
+    82                                  
+    83                                  count:
+    84 0000008B 803F00                          cmp     [rdi], byte 0   ;null character?
+    85 0000008E 7408                            je      end_count
+    86 00000090 48FFC2                          inc     rdx
+    87 00000093 48FFC7                          inc     rdi
+    88 00000096 EBF3                            jmp     count
+    89                                  
+    90                                  end_count:
+    91 00000098 4889C6                          mov     rsi, rax
+    92 0000009B B801000000                      mov     rax, SYSCALL_WRITE
+    93 000000A0 BF01000000                      mov     rdi, STDOUT
+    94 000000A5 0F05                            syscall
+    95                                  
+    96 000000A7 C3                              ret
+    97                                  breaker:
+    98 000000A8 C3                      	ret
+    99                                  	

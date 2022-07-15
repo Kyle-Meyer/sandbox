@@ -863,6 +863,213 @@ vector<vector<int>> threeSum(vector<int> arr)
 
 
 }
+
+
+int threeSumClosest(vector<int> arr, int target)
+{
+
+	int closest = INT_MAX;
+	std::sort(arr.begin(), arr.end());
+
+	for (int i = 0; i < arr.size(); i++)
+	{
+		//create our pivots
+		int l = i + 1, r = arr.size() - 1;
+		while (l < r)
+		{
+			
+			int sum = arr[i] + arr[l] + arr[r];
+			if (sum == target)
+				return sum;
+			if (abs(sum - target) < abs(closest - target))
+				closest = sum;
+			if (sum < target)
+				l++;
+			else
+				r--;
+		}
+	}
+
+	return closest;
+
+}
+/*
+
+vector<int> kmpProcess(string needle) 
+{
+	int n = needle.size();
+	vector<int> lps(n, 0);
+	for (int i = 1, len = 0; i < n;) 
+	{
+		if (needle[i] == needle[len]) 
+		{
+			lps[i++] = ++len;
+		} 
+		else if (len) 
+		{
+			len = lps[len - 1];
+		} 
+		else 
+		{
+			lps[i++] = 0;
+		}
+	}
+	return lps;
+}
+
+
+int strStr(string haystack, string needle) 
+{
+        int m = haystack.size(), n = needle.size();
+        if (!n) {
+            return 0;
+        }
+        vector<int> lps = kmpProcess(needle);
+        for (int i = 0, j = 0; i < m;) {
+            if (haystack[i] == needle[j]) { 
+                i++, j++;
+            }
+            if (j == n) {
+                return i - j;
+            }
+            if (i < m && haystack[i] != needle[j]) {
+                j ? j = lps[j - 1] : i++;
+            }
+        }
+        return -1;
+   }
+
+
+
+*/
+//simple solution. could also do the KMP solution listed above:
+int strStr(string haystack, string needle) 
+{
+	int i = 0;
+	int hSize = haystack.size(), nSize = needle.size();
+	if (haystack.size() == 0)
+		return i;
+	while(i + nSize - 1 < hSize)
+	{
+		if (haystack.substr(i, nSize) == needle)
+			return i;
+		//keep iteraiting if we havent found a match, but also skip entries that automatically dont start with the needle
+		while ((i++ + nSize - 1) < hSize && haystack[i] != needle[0]);
+	}
+	//if we get here we failed
+	return -1;
+}
+
+
+//in place image rotation
+void rotate(vector<vector<int>>& matrix)
+{
+	//make sure she aint empty
+	if (matrix.size() == 0)
+		return;
+	// the best approach I can think of is to take the transpose of the matrix, and then reverse the transpose, this will result in an O(n^2) runtime, but will work in place
+
+	//first lets take the transpose
+	int i = 0, j = 0, size = matrix.size(), column = 0;
+	for (int i = 0; i < size; i++)
+	{
+		for (int j = 0; j < i; j++) {
+			swap(matrix[i][j], matrix[j][i]);
+		}
+	}
+	//now we reverse
+	for (int i = 0; i < size; i++)
+	{
+		for (int j = 0; j < size / 2; j++) {
+			swap(matrix[i][j], matrix[i][size - j - 1]);
+		}
+	}
+	for (int i = 0; i < matrix.size(); i++)
+	{
+		for (int j = 0; j < size; j++)
+		{
+			cout << matrix[i][j] << " ";
+		}
+		cout << endl;
+	}
+}
+
+
+//Group anagram function
+vector<vector<string>> groupAnagrams(vector<string>& input_set) 
+{
+	// the first value will hold the key, the second vector is used to hold the multiple values.
+	unordered_map<string, vector<string> > my_map;
+	vector<vector<string> > final_set;
+
+	for (int i = 0; i < input_set.size(); i++)
+	{
+		// take value at the index as a key
+		string key = input_set[i];
+
+		//sort the key
+		sort(key.begin(), key.end());
+
+		// add the value to that key
+		my_map[key].push_back(input_set[i]);
+
+	}
+
+	for (auto n : my_map)
+	{
+		// add all the values in the map to the final set
+		final_set.push_back(n.second);
+	}
+
+	return final_set;
+}
+
+
+//minimum window substring
+string minWindow(string s, string t)
+{
+	string result = "";
+	if (t.size() > s.size())
+		return "-1";
+	int n = s.size(), m = t.size();
+	int freq1[128] = {0};
+	int freq2[128] = {0};
+
+	//count occurences of characters in window
+	for (int i = 0; i < m; i++)
+		freq2[t[i]]++;
+	int start = 0, index = -1, min_len = INT_MAX, count = 0;
+	for (int j = 0; j < n; j++)
+	{
+		//count occurences of characters in string
+		freq1[s[j]]++;
+		//if we find matches, increment our counter
+		if (freq1[s[j]] <= freq2[s[j]])
+			count++;
+		if (count == m)
+		{
+			while (freq1[s[start]] > freq2[s[start]] || freq2[s[start]] == 0)
+			{
+				if (freq1[s[start]] > freq2[s[start]])
+					freq1[s[start]] --;
+				start++;
+			}
+			int len_window = j - start + 1;
+			if (min_len > len_window)
+			{
+				min_len = len_window;
+				index = start;
+			}
+		}
+	}
+	//no window happened if this is true
+	if (index == -1)
+	{
+		cout << "no window" << endl;
+		return "-1";
+	}
+	return s.substr(index, min_len);
+}
 int main()
 {
 
@@ -920,6 +1127,8 @@ int main()
 	*/
 
 
+	//3sum driver
+	/*
 	vector<int> test = { -1,0,1,2,-1,-4 };
 	vector<vector<int>> solution = threeSum(test);
 	for (int i = 0; i < solution.size(); i++)
@@ -930,6 +1139,21 @@ int main()
 			cout << " " << solution[i][j] << ", ";
 		}
 		cout << endl;
-	}
+	}*/
+
+
+	//three sum closest driver
+	/*
+	vector<int> test = { -1, 2, 1, -4 };
+	cout << threeSumClosest(test, 1) << endl;
+	*/
+
+
+	/*
+	vector<vector<int>> arr = { {1, 2, 3} ,{4, 5, 6},{7, 8, 9} };
+	rotate(arr);
+*/
+
+	cout << minWindow("doggo", "go") << endl;
 	return 0;
 }
